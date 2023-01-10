@@ -133,7 +133,7 @@ def restartexp():
 
 #修复网络驱动器
 def fix():
-    if os.path.exists(r'C:\Windows\_XizoDiskIconChanger\NetDeskFixed') == False:
+    if os.path.exists(r'C:\Windows\_XizoDiskIconChanger\NetworkDiskFixed') == False:
         if msg.askyesno('修复网络驱动器','稍后会弹出一个“注册表编辑器”窗口，\n请确认安装注册表\n点击“是”开始'):
             regtmp = open("regtmp.reg", "wb+")
             regtmp.write(base64.b64decode(regfix))
@@ -141,7 +141,7 @@ def fix():
             win32api.ShellExecute(0, 'open', 'regtmp.reg', '', '', 1)
             if msg.askyesno('fix','成功添加后点击是\n然后手动重启电脑 即可完成修复'):
                 os.remove("regtmp.reg")
-                os.makedirs(r'C:\Windows\_XizoDiskIconChanger\NetDeskFixed')
+                os.makedirs(r'C:\Windows\_XizoDiskIconChanger\NetworkDiskFixed')
     else:
         msg.showerror('修复网络驱动器', '你已经修复过了')
 
