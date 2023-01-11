@@ -1,5 +1,7 @@
 # Xizo硬盘图标修改器 DiskIconChangerByXizo
 这是一个可以修改硬盘图标的软件哦~。  A software that can change the disk icon.
+
+bilibili视频：https://www.bilibili.com/video/BV1nK411C7j1/
 ## 软件截图 Screenshot
 ![1](https://user-images.githubusercontent.com/120782087/211531071-8f1f8d51-b58f-4ee5-a8d1-c3bd76d64dbe.png)
 
