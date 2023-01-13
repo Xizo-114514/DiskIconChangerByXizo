@@ -8,9 +8,10 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox as msg
 from tkinter import filedialog as filemsg
-import win32api
 import base64
 import datetime
+import win32api
+import win32con
 from PIL import ImageTk, Image
 from shutil import rmtree
 from files import regfix, imgicon, imgbg, usehelptext
@@ -19,7 +20,7 @@ from files import regfix, imgicon, imgbg, usehelptext
 def usehelp():
     msgbox = Tk()
     helpwidth = 840
-    helpheight = 820
+    helpheight = 880
     helpx = int((screenwidth - helpwidth) / 2)
     helpy = int((screenheight - helpheight) / 2)
     msgbox.geometry("%dx%d+%d+%d" % (helpwidth, helpheight, helpx, helpy))
@@ -37,7 +38,7 @@ def usehelp():
 
 #关于作者
 def about():
-    if msg.askokcancel('关于作者', '这个程序是Xizo编写的。\n版本 V1.0-2023.01.04\n作者QQ群：912164832\n点击确定跳转至我的bilibili主页。'):
+    if msg.askokcancel('关于作者', '这个程序是Xizo编写的。\n版本 V1.1-2023.01.13\n作者QQ群：912164832\n点击确定跳转至我的bilibili主页。'):
         webbrowser.open('https://space.bilibili.com/407420026', new=0, autoraise=True)
 
 #选择图标
@@ -49,7 +50,6 @@ def choose_img():
     choose_img_bar.delete("1.0","end")
     choose_img_bar.insert("insert", imgpath)
     choose_img_bar.configure(state='disabled')
-
     #预览小图标更新图片
     showimg_open = Image.open(imgpath)
     showimg = ImageTk.PhotoImage(showimg_open.resize((48,48)))
@@ -58,6 +58,10 @@ def choose_img():
 
 #重置图标
 def rest():
+    errreg = 0
+    errinf1 = 0
+    errinf2 = 0
+    errinf = 1
     try:
         queryimgpath = winreg.QueryValue(winreg.HKEY_LOCAL_MACHINE,
         'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\\' + choose_disk_combobox.get()[0] + '\DefaultIcon')
@@ -66,10 +70,27 @@ def rest():
         'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\\' + choose_disk_combobox.get()[0] + '\DefaultIcon')
         winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE,
         'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\\' + choose_disk_combobox.get()[0])
-        msg.showinfo('重置图标', '图标重置成功')
     except:
         print()
+        errreg = 1
+    try:
+        os.remove(choose_disk_combobox.get()[0] + r":\icon.ico")
+    except:
+        errinf1 = 1
+    try:
+        os.remove(choose_disk_combobox.get()[0] + r":\autorun.inf")
+    except:
+        errinf2 = 1
+    if errinf1 == 0 or errinf2 == 0:
+        errinf = 0
+    if errreg == 1 and errinf == 1:
         msg.showerror('重置图标', '错误：没有选择磁盘\n或图标已经重置了')
+    if errreg == 1 and errinf == 0:
+        msg.showinfo('重置图标', '图标重置成功(autorun.inf)')
+    if errreg == 0 and errinf == 1:
+        msg.showinfo('重置图标', '图标重置成功(注册表)')
+    if errreg == 0 and errinf == 0:
+        msg.showinfo('重置图标', '图标重置成功(autorun.inf + 注册表)')
 
 #安装图标
 def install():
@@ -102,7 +123,7 @@ def install():
         winreg.SetValue(winreg.HKEY_LOCAL_MACHINE,
         'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\\' + choose_disk_combobox.get()[0] + '\DefaultIcon',
         winreg.REG_SZ, xizopath)
-        msg.showinfo('安装图标', '图标安装成功')
+        msg.showinfo('安装图标', '通过修改注册表安装图标成功')
     except:
         if errimg == 1 and errdisk == 1:
             msg.showerror('安装图标', '错误：你既没有选择磁盘也没有选择图片')
@@ -110,6 +131,53 @@ def install():
             msg.showerror('安装图标', '错误：你没有选择图片')
         if errimg == 0 and errdisk == 1:
             msg.showerror('安装图标', '错误：你没有选择磁盘')
+
+#autorun.inf方式安装图标
+def infinstall():
+    errimg = 0
+    errdisk = 0
+    try:
+        os.remove(choose_disk_combobox.get()[0] + r":\autorun.inf")
+    except:
+        print()
+    try:
+        originimgpath = str(choose_img_bar.get(1.0, END).replace('/','\\'))[:-1]
+        inputimg = Image.open(originimgpath)
+    except:
+        errimg = 1
+    try:
+        imgh, imgw = inputimg.size
+        if imgh >= 48 and imgw >= 48:
+            inputimg.save(choose_disk_combobox.get()[0]+r":\icon.ico", sizes=[(48, 48)])
+        else:
+            inputimg.save(choose_disk_combobox.get()[0]+r":\icon.ico", sizes=[(imgh, imgw)])
+    except:
+        print()
+    try:
+        inf = open(choose_disk_combobox.get()[0]+r":\autorun.inf", "w+")
+    except:
+        errdisk = 1
+    try:
+        inf.write("[autorun]\nicon=icon.ico")
+        inf.close()
+    except:
+        print()
+    try:
+        win32api.SetFileAttributes(choose_disk_combobox.get()[0] + r":\icon.ico", win32con.FILE_ATTRIBUTE_HIDDEN)
+    except:
+        print()
+    try:
+        win32api.SetFileAttributes(choose_disk_combobox.get()[0] + r":\autorun.inf", win32con.FILE_ATTRIBUTE_HIDDEN)
+    except:
+        print()
+    if errimg == 1 and errdisk == 1:
+        msg.showerror('inf安装', '错误：你既没有选择磁盘也没有选择图片')
+    if errimg == 1 and errdisk == 0:
+        msg.showerror('inf安装', '错误：你没有选择图片')
+    if errimg == 0 and errdisk == 1:
+        msg.showerror('inf安装', '错误：你没有选择磁盘')
+    if errimg == 0 and errdisk == 0:
+        msg.showinfo('inf安装', '通过添加autorun.inf安装图标成功\n重启电脑或重新连接移动驱动器生效')
 
 #恢复所有硬盘图标并清除缓存
 def delete():
@@ -119,6 +187,14 @@ def delete():
             'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\\' + diski[0] + '\DefaultIcon')
             winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE,
             'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\\' + diski[0])
+        except:
+            print()
+        try:
+            os.remove(diski[0] + r":\icon.ico")
+        except:
+            print()
+        try:
+            os.remove(diski[0] + r":\autorun.inf")
         except:
             print()
     try:
@@ -133,7 +209,7 @@ def restartexp():
 
 #修复网络驱动器
 def fix():
-    if os.path.exists(r'C:\Windows\_XizoDiskIconChanger\NetworkDiskFixed') == False:
+    if os.path.exists(r'C:\Windows\_XizoDiskIconChanger\NetDeskFixed') == False:
         if msg.askyesno('修复网络驱动器','稍后会弹出一个“注册表编辑器”窗口，\n请确认安装注册表\n点击“是”开始'):
             regtmp = open("regtmp.reg", "wb+")
             regtmp.write(base64.b64decode(regfix))
@@ -141,13 +217,13 @@ def fix():
             win32api.ShellExecute(0, 'open', 'regtmp.reg', '', '', 1)
             if msg.askyesno('fix','成功添加后点击是\n然后手动重启电脑 即可完成修复'):
                 os.remove("regtmp.reg")
-                os.makedirs(r'C:\Windows\_XizoDiskIconChanger\NetworkDiskFixed')
+                os.makedirs(r'C:\Windows\_XizoDiskIconChanger\NetDeskFixed')
     else:
         msg.showerror('修复网络驱动器', '你已经修复过了')
 
-if __name__ == "__main__":
-
-    # 获取盘符
+# 获取盘符
+def getdisk():
+    global disk_list
     kernel32 = ctypes.windll.kernel32
     volumeNameBuffer = ctypes.create_unicode_buffer(1024)
     fileSystemNameBuffer = ctypes.create_unicode_buffer(1024)
@@ -169,10 +245,18 @@ if __name__ == "__main__":
                 ctypes.sizeof(fileSystemNameBuffer)
             )
             disk_list.append('%s: %s' % (diski, volumeNameBuffer.value))
+            try:
+                choose_disk_combobox['values'] = disk_list
+            except:
+                print()
+
+if __name__ == "__main__":
+
+    getdisk()
 
     #主窗口
     root = tk.Tk()
-    root.title("硬盘图标修改器  V1.0  by  Xizo")
+    root.title("硬盘图标修改器  V1.1  by  Xizo")
 
     #窗口位置大小
     screenwidth = root.winfo_screenwidth()
@@ -221,18 +305,22 @@ if __name__ == "__main__":
 
     #Buttons
     choose_img_btn = tk.Button(root, text="打开\n图片", command=choose_img, font=("微软雅黑", 8))
-    rest_btn = tk.Button(root, text="     重置图标     ", command=rest, fg='black', bg='pink', font=("微软雅黑", 10))
-    install_btn = tk.Button(root, text="     安装图标     ", command=install, fg='black', bg='light green', font=("微软雅黑", 10))
+    refresh_btn = tk.Button(root, text="刷新", command=getdisk, font=("微软雅黑", 8))
+    rest_btn = tk.Button(root, text="  重置图标  ", command=rest, fg='black', bg='pink', font=("微软雅黑", 10))
+    install_btn = tk.Button(root, text="  安装图标  ", command=install, fg='black', bg='light green', font=("微软雅黑", 10))
+    inf_install_btn = tk.Button(root, text="inf安装", command=infinstall, fg='black', bg='yellow', font=("微软雅黑", 8))
     restartexplore_btn = tk.Button(root, text="重启资源管理器", command=restartexp, fg='black', font=("微软雅黑", 10))
     fix_btn = tk.Button(root, text="修复网络驱动器", command=fix, fg='black', font=("微软雅黑", 10))
     delete_btn = tk.Button(root, text="彻底还原清缓存", command=delete, font=("微软雅黑", 10))
 
     #Place elements
-    choose_disk_combobox.place(x=158, y=200)
+    choose_disk_combobox.place(x=121, y=201)
+    refresh_btn.place(x=235, y=200)
     choose_img_bar.place(x=95, y=250)
     choose_img_btn.place(x=235, y=248)
     rest_btn.place(x=44, y=323)
-    install_btn.place(x=164, y=323)
+    install_btn.place(x=190, y=323)
+    inf_install_btn.place(x=134, y=323,height=33)
     restartexplore_btn.place(x=310, y=233)
     fix_btn.place(x=310, y=278)
     delete_btn.place(x=310, y=323)
