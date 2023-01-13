@@ -13,6 +13,8 @@ bilibili视频：https://www.bilibili.com/video/BV1nK411C7j1/
 
 图片格式支持 ico、png、jpg、bmp、tif 等常用格式，建议图片比例为1:1，分辨率大于48x48。
 
+inf安装：如果是U盘或者移动硬盘，改注册表方法不可用，请使用inf安装。该功能更新于V1.1。
+
 ### 如何重置图标：
 1.选中要重置的磁盘；2.点击红色按钮“重置图标”；3.刷新即可生效。
 
@@ -30,4 +32,4 @@ bilibili视频：https://www.bilibili.com/video/BV1nK411C7j1/
 按下按钮后会将您的注册表还原，并删除创建的缓存目录及其内的文件。
 
 ### 欢迎使用本软件，感谢你看完这段说明，谢谢。
-DiskIconChanger By Xizo V1.0-2023.01.04
+DiskIconChanger By Xizo V1.1-2023.01.13
